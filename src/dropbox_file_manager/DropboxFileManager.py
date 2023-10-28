@@ -2,14 +2,16 @@ import sys
 from pathlib import Path
 
 import dropbox
+from dropbox import DropboxOAuth2FlowNoRedirect
 from dropbox.exceptions import ApiError, AuthError
 from dropbox.files import WriteMode
 
 
 class DropboxFileManager:
-    def __init__(self, token: str):
+    def __init__(self, token: str, refresh_token: str = None):
         self.token = token
-        self.dbx = dropbox.Dropbox(self.token)
+        self.refresh_token = refresh_token
+        self.dbx = dropbox.Dropbox(self.token, self.refresh_token)
         self.check_token()
 
     def check_token(self):
@@ -17,8 +19,10 @@ class DropboxFileManager:
             self.dbx.users_get_current_account()
         except AuthError:
             sys.exit(
-                "ERROR: Invalid access token; try re-generating an "
-                "access token from the app console on the web."
+                "ERROR: Invalid access token. You can either: \n1) Re-generate a temporary "
+                "access token via the app console at https://www.dropbox.com/developers/apps\n"
+                "2) Run DropboxFileManager.generate_token(app_key, app_secret) to generate a "
+                "new access token and refresh token that can be used to refresh access indefinetly"
             )
 
     def get_download_link(self, dbx_file_path):
@@ -56,3 +60,47 @@ class DropboxFileManager:
         if dbx_file_path[0] != "/":
             dbx_file_path = "/" + dbx_file_path
         return dbx_file_path
+
+
+def generate_tokens(app_key, app_secret):
+    """
+    This example walks through a basic oauth flow for fetching an access token and refresh token.
+    It requires a user to click "allow" on the dropbox website, but afterwards the refresh token
+    can be used to indefinitly extend access without user input.
+
+    Original author: Karandeep Johar from Dropbox.
+    See here: https://github.com/dropbox/dropbox-sdk-python/blob/main/example/oauth/commandline-oauth.py
+    """
+
+    auth_flow = DropboxOAuth2FlowNoRedirect(
+        app_key, app_secret, token_access_type="offline"
+    )
+
+    authorize_url = auth_flow.start()
+    print("1. Go to: " + authorize_url)
+    print('2. Click "Allow" (you might have to log in first).')
+    print("3. Copy the authorization code.")
+    auth_code = input("Enter the authorization code here: ").strip()
+
+    try:
+        oauth_result = auth_flow.finish(auth_code)
+
+    except Exception as e:
+        print("Error: %s" % (e,))
+        exit(1)
+
+    print("Testing access token..")
+    with dropbox.Dropbox(oauth2_access_token=oauth_result.access_token) as dbx:
+        dbx.users_get_current_account()
+        print("Successfully set up client!")
+
+    print("Your access token:", oauth_result.access_token)
+    print("Your refresh token:", oauth_result.refresh_token)
+    print(
+        "Pass these to a DropboxFileManager class instance to use Dropbox via Python :)"
+    )
+
+    return {
+        "access_token": oauth_result.access_token,
+        "refresh_token": oauth_result.refresh_token,
+    }

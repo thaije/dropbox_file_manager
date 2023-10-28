@@ -7,12 +7,17 @@ Simple Python package that uses the dropbox API to upload files and pass back a 
 # How to use
 
 ### Get a Dropbox access token
-To get a Dropbox API access token, go to the Dropbox [`console app`](https://www.dropbox.com/developers/apps), register a new App, provide it with `files` and `sharing` permissions, and finally generate an access token. The access token is valid permanently (I think).
+To get a Dropbox API access token first go to the Dropbox [`console app`](https://www.dropbox.com/developers/apps), register a new App, provide it with `files` and `sharing` permissions.
+Next, you got to get a Dropbox access token. You can either:
+1. Generate a temporary (less than a day) access token via the app console at https://www.dropbox.com/developers/apps\n"
+2. Run `DropboxFileManager.generate_token(your_app_key, your_app_secret)` to generate a new access token and refresh token that can be used to automatically refresh access indefinetly once fetched.
+
 
 ### Import in your Python script
+
 ```python
 from dropbox_file_manager import DropboxFileManager
-dfm = DropboxFileManager(token="TOKEN")
+dfm = DropboxFileManager(token="TOKEN", refresh_token="REFRESH_TOKEN_IF_YOU_HAVE_ONE")
 
 # upload and get download link
 download_link = dfm.upload_file("path/to/local/file", "upload/path/to/file/in/dropbox")
