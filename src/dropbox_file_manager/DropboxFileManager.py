@@ -8,10 +8,33 @@ from dropbox.files import WriteMode
 
 
 class DropboxFileManager:
-    def __init__(self, token: str, refresh_token: str = None):
+    def __init__(
+        self,
+        token: str,
+        refresh_token: str = None,
+        app_key: str = None,
+        app_secret: str = None,
+    ):
         self.token = token
         self.refresh_token = refresh_token
-        self.dbx = dropbox.Dropbox(self.token, self.refresh_token)
+        self.app_key = app_key
+        self.app_secret = app_secret
+
+        if refresh_token or app_secret or app_key:
+            try:
+                assert refresh_token
+                assert app_key
+                assert app_secret
+            except AssertionError:
+                raise Exception(
+                    "Using a refresh token requires the app_key and app_secret to be set as well."
+                )
+        self.dbx = dropbox.Dropbox(
+            oauth2_access_token=token,
+            oauth2_refresh_token=refresh_token,
+            app_key=self.app_key,
+            app_secret=app_secret,
+        )
         self.check_token()
 
     def check_token(self):

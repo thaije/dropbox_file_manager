@@ -17,7 +17,10 @@ Next, you got to get a Dropbox access token. You can either:
 
 ```python
 from dropbox_file_manager import DropboxFileManager
-dfm = DropboxFileManager(token="TOKEN", refresh_token="REFRESH_TOKEN_IF_YOU_HAVE_ONE")
+dfm = DropboxFileManager(token="TOKEN", refresh_token="REFRESH_TOKEN", app_key="YOUR_DROPBOX_APP_KEY", app_secret="YOUR_DROPBOX_APP_SECRET")
+# Or alternatively use with a temporary access token without refresh token.
+# dfm = DropboxFileManager(token="TOKEN")
+
 
 # upload and get download link
 download_link = dfm.upload_file("path/to/local/file", "upload/path/to/file/in/dropbox")
